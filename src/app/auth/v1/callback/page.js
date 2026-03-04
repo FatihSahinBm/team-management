@@ -29,15 +29,20 @@ export default function AuthCallbackPage() {
 
         const handleSessionTokens = async (activeSession) => {
             if (activeSession?.provider_token) {
-                // Save the Google provider token and refresh token to our database
-                // We use upsert so it updates existing rows
-                await supabase.from('user_tokens').upsert({
-                    user_id: activeSession.user.id,
-                    email: activeSession.user.email,
-                    provider_token: activeSession.provider_token,
-                    provider_refresh_token: activeSession.provider_refresh_token || null, // Might be null on subsequent logins if prompt='consent' wasn't used
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'user_id' }).catch(err => console.error("Token upsert error:", err));
+                try {
+                    // Save the Google provider token and refresh token to our database
+                    // We use upsert so it updates existing rows
+                    const { error: upsertError } = await supabase.from('user_tokens').upsert({
+                        user_id: activeSession.user.id,
+                        email: activeSession.user.email,
+                        provider_token: activeSession.provider_token,
+                        provider_refresh_token: activeSession.provider_refresh_token || null,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'user_id' });
+                    if (upsertError) console.error("Token upsert error:", upsertError);
+                } catch (err) {
+                    console.error("Token kaydetme hatası:", err);
+                }
             }
         };
 
