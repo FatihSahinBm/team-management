@@ -4,7 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { X, Loader2, Calendar } from "lucide-react";
 
-export default function TaskAssignmentModal({ isOpen, onClose, onSuccess, teamId, userId, userName }) {
+export default function TaskAssignmentModal({ isOpen, onClose, onSuccess, teamId, userId, userName, userEmail }) {
     const [title, setTitle] = useState("");
     const [dueDate, setDueDate] = useState("");
     const [loading, setLoading] = useState(false);
@@ -18,16 +18,53 @@ export default function TaskAssignmentModal({ isOpen, onClose, onSuccess, teamId
         setError(null);
 
         try {
-            const { error: insertError } = await supabase
+            // 1. Save task to Supabase
+            const { data: insertedTask, error: insertError } = await supabase
                 .from('tasks')
                 .insert([{
                     team_id: teamId,
                     user_id: userId,
                     title,
                     due_date: dueDate
-                }]);
+                }])
+                .select()
+                .single();
 
             if (insertError) throw insertError;
+
+            // 2. Try to add to Google Calendar
+            try {
+                // Get the current session to extract the provider token
+                const { data: { session } } = await supabase.auth.getSession();
+                const providerToken = session?.provider_token;
+
+                const response = await fetch('/api/calendar/add-event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title,
+                        dueDate,
+                        assigneeEmail: userEmail, // We need to add userEmail as a prop
+                        providerToken // Pass the provider token to the server
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    console.warn("Takvim API Uyarısı:", data.error);
+                    alert("Google Takvim'e eklenirken bir sorun oluştu:\n" + data.error);
+                } else if (data.eventId) {
+                    // Update task with the Google Event ID
+                    await supabase
+                        .from('tasks')
+                        .update({ google_event_id: data.eventId })
+                        .eq('id', insertedTask.id);
+                }
+            } catch (calendarError) {
+                console.error("Takvim entegrasyon hatası:", calendarError);
+                alert("Takvim entegrasyon hatası: " + calendarError.message);
+                // Do not throw, we still successfully created the task
+            }
 
             onSuccess();
             onClose();
@@ -39,6 +76,7 @@ export default function TaskAssignmentModal({ isOpen, onClose, onSuccess, teamId
             setLoading(false);
         }
     };
+
 
     return (
         <div className="modal-overlay">

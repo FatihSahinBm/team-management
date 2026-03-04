@@ -1,0 +1,52 @@
+[2026-03-03T11:24:53.941Z] Request target: fatihsahinbm@gmail.com, providerToken length: 338
+[2026-03-03T11:24:54.926Z] ERROR: cookieStore.get is not a function
+Stack: TypeError: cookieStore.get is not a function
+    at Object.get (C:\Projects\team-management\.next\dev\server\chunks\[root-of-the-server]__60dd81ae._.js:168:40)
+    at getWithHints (C:\Projects\team-management\.next\dev\server\chunks\node_modules_aa5e5174._.js:18546:49)
+    at getAll (C:\Projects\team-management\.next\dev\server\chunks\node_modules_aa5e5174._.js:18558:46)
+    at Object.getItem (C:\Projects\team-management\.next\dev\server\chunks\node_modules_aa5e5174._.js:18747:42)
+    at getItemAsync (C:\Projects\team-management\.next\dev\server\chunks\node_modules_@supabase_auth-js_dist_module_02e1b12e._.js:586:33)
+    at SupabaseAuthClient.__loadSession (C:\Projects\team-management\.next\dev\server\chunks\node_modules_@supabase_auth-js_dist_module_02e1b12e._.js:4130:235)
+    at SupabaseAuthClient._useSession (C:\Projects\team-management\.next\dev\server\chunks\node_modules_@supabase_auth-js_dist_module_02e1b12e._.js:4113:39)
+    at C:\Projects\team-management\.next\dev\server\chunks\node_modules_@supabase_auth-js_dist_module_02e1b12e._.js:4047:25
+    at C:\Projects\team-management\.next\dev\server\chunks\node_modules_@supabase_auth-js_dist_module_02e1b12e._.js:4062:34
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2026-03-04T07:41:44.426Z] Request target: fatihsahinbm@gmail.com, providerToken length: 0
+[2026-03-04T07:55:14.023Z] Request target: fatihsahinbm@gmail.com, providerToken length: 0
+[2026-03-04T07:56:10.725Z] Request target: fatihsahinbm@gmail.com, providerToken length: 340
+[2026-03-04T07:56:11.609Z] ERROR: Google Calendar API has not been used in project 26181784006 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=26181784006 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.
+Stack: Error: Google Calendar API has not been used in project 26181784006 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=26181784006 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.
+    at Gaxios._request (C:\Projects\team-management\.next\dev\server\chunks\node_modules_aa5e5174._.js:763:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async OAuth2Client.requestAsync (C:\Projects\team-management\.next\dev\server\chunks\node_modules_google-auth-library_e272b0a4._.js:1309:20)
+    at async createAPIRequestAsync (C:\Projects\team-management\.next\dev\server\chunks\node_modules_aa5e5174._.js:6584:25)
+    at async POST (C:\Projects\team-management\.next\dev\server\chunks\[root-of-the-server]__60dd81ae._.js:225:26)
+    at async AppRouteRouteModule.do (C:\Projects\team-management\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (C:\Projects\team-management\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:45156)
+    at async responseGenerator (C:\Projects\team-management\.next\dev\server\chunks\node_modules_next_dc2cac75._.js:16529:38)
+    at async AppRouteRouteModule.handleResponse (C:\Projects\team-management\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:191938)
+    at async handleResponse (C:\Projects\team-management\.next\dev\server\chunks\node_modules_next_dc2cac75._.js:16592:32)
+    at async Module.handler (C:\Projects\team-management\.next\dev\server\chunks\node_modules_next_dc2cac75._.js:16645:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Projects\team-management\node_modules\next\dist\server\base-server.js:1442:9)
+    at async DevServer.renderPageComponent (C:\Projects\team-management\node_modules\next\dist\server\base-server.js:1494:24)
+    at async DevServer.renderToResponseImpl (C:\Projects\team-management\node_modules\next\dist\server\base-server.js:1544:32)
+    at async DevServer.pipeImpl (C:\Projects\team-management\node_modules\next\dist\server\base-server.js:1038:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Projects\team-management\node_modules\next\dist\server\next-server.js:395:17)
+    at async DevServer.handleRequestImpl (C:\Projects\team-management\node_modules\next\dist\server\base-server.js:929:17)
+    at async C:\Projects\team-management\node_modules\next\dist\server\dev\next-dev-server.js:387:20
+    at async Span.traceAsyncFn (C:\Projects\team-management\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Projects\team-management\node_modules\next\dist\server\dev\next-dev-server.js:383:24)
+    at async invokeRender (C:\Projects\team-management\node_modules\next\dist\server\lib\router-server.js:248:21)
+    at async handleRequest (C:\Projects\team-management\node_modules\next\dist\server\lib\router-server.js:447:24)
+    at async requestHandlerImpl (C:\Projects\team-management\node_modules\next\dist\server\lib\router-server.js:496:13)
+    at async Server.requestListener (C:\Projects\team-management\node_modules\next\dist\server\lib\start-server.js:226:13)
+[2026-03-04T07:59:35.313Z] Request target: fatihsahinbm@gmail.com, providerToken length: 340
+[2026-03-04T07:59:36.168Z] Success! Event ID: och7ltc342b4g9pvc5maqmvgqs
+[2026-03-04T08:13:09.852Z] Request target: superbey574@gmail.com, providerToken length: 340
+[2026-03-04T08:13:10.585Z] Success! Event ID: 953bv7vcaf2b71qgbfv533uoic
+[2026-03-04T08:27:50.929Z] Request target: superbey574@gmail.com, providerToken length: 340
+[2026-03-04T08:27:51.747Z] Success! Event ID: aeo4af5hhhfjh7mv9ed3t72q3s
+[2026-03-04T08:35:39.638Z] Request target: superbey574@gmail.com, providerToken length: 340
+[2026-03-04T08:35:40.449Z] Success! Event ID: as79qotedco99cpkio9qfir8h0
+[2026-03-04T08:50:31.893Z] Request target: superbey574@gmail.com, providerToken length: 253
+[2026-03-04T08:50:32.368Z] Token Error for superbey574@gmail.com: Could not find the table 'public.user_tokens' in the schema cache

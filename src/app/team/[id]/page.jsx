@@ -6,7 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTeamStore } from "@/store/useTeamStore";
 import TaskAssignmentModal from "@/components/TaskAssignmentModal";
-import { Users, Crown, Calendar, CheckCircle, Clock, Plus, ArrowLeft, Loader2, Key } from "lucide-react";
+import { Users, Crown, Calendar, CheckCircle, Clock, Plus, ArrowLeft, Loader2, Key, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -103,7 +103,7 @@ export default function TeamDetailPage() {
         return acc;
     }, {}) || {};
 
-    const handleStatusChange = async (taskId, newStatus) => {
+    const handleStatusChange = async (taskId, newStatus, currentTitle, googleEventId, assigneeEmail) => {
         try {
             const { error } = await supabase
                 .from('tasks')
@@ -111,9 +111,63 @@ export default function TeamDetailPage() {
                 .eq('id', taskId);
 
             if (error) throw error;
+
+            // Sync with Google Calendar if event exists
+            if (googleEventId && assigneeEmail) {
+                await fetch('/api/calendar/update-event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        eventId: googleEventId,
+                        assigneeEmail: assigneeEmail,
+                        title: currentTitle,
+                        status: newStatus
+                    })
+                }).catch(console.error); // Add non-blocking catch so UI updates even if sync fails
+            }
+
             refetchTasks();
         } catch (err) {
             alert("Görev güncellenirken bir hata oluştu: " + err.message);
+        }
+    };
+
+    const handleDeleteTask = async (taskId, googleEventId, assigneeEmail) => {
+        if (!window.confirm("Bu görevi silmek istediğinize emin misiniz? (Eğer takvime eklendiyse, oradan da silinecektir.)")) {
+            return;
+        }
+
+        try {
+            // 2. Try to delete from Google Calendar first
+            if (googleEventId && assigneeEmail) {
+                const response = await fetch('/api/calendar/delete-event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        eventId: googleEventId,
+                        assigneeEmail: assigneeEmail
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    alert("Google Takvim'den silinirken bir sorun oluştu:\n" + data.error);
+                    // Optional: early return to prevent DB deletion if calendar fails?
+                    // return; 
+                }
+            }
+
+            // 1. Delete from Supabase
+            const { error } = await supabase
+                .from('tasks')
+                .delete()
+                .eq('id', taskId);
+
+            if (error) throw error;
+
+            refetchTasks();
+        } catch (err) {
+            alert("Görev silinirken bir hata oluştu: " + err.message);
         }
     };
 
@@ -180,7 +234,8 @@ export default function TeamDetailPage() {
                                             onClick={() => setAssignmentModal({
                                                 isOpen: true,
                                                 userId: member.user_id,
-                                                userName: member.user_email?.split('@')[0] || 'Kullanıcı'
+                                                userName: member.user_email?.split('@')[0] || 'Kullanıcı',
+                                                userEmail: member.user_email
                                             })}
                                         >
                                             <Plus size={20} />
@@ -198,45 +253,94 @@ export default function TeamDetailPage() {
                                             <span className="text-muted" style={{ fontSize: "0.85rem" }}>Henüz görev atanmamış.</span>
                                         </div>
                                     ) : (
-                                        memberTasks.map(task => (
-                                            <div key={task.id} style={{ padding: "16px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-glass)", borderRadius: "12px", transition: "all 0.3s" }}>
-                                                <div className="flex-between mb-2">
-                                                    <h5 style={{ fontSize: "1rem", fontWeight: "500", lineHeight: "1.4" }}>{task.title}</h5>
-                                                    {(isAdmin || isMe) && (
-                                                        <select
-                                                            value={task.status}
-                                                            onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                                                            style={{
-                                                                background: statusMap[task.status].bg,
-                                                                color: statusMap[task.status].color,
-                                                                border: `1px solid ${statusMap[task.status].color}`,
-                                                                borderRadius: "8px",
-                                                                padding: "4px 8px",
-                                                                fontSize: "0.75rem",
-                                                                fontWeight: "600",
-                                                                outline: "none",
-                                                                cursor: "pointer"
-                                                            }}
-                                                        >
-                                                            <option value="pending">Bekliyor</option>
-                                                            <option value="in-progress">Devam Ediyor</option>
-                                                            <option value="completed">Tamamlandı</option>
-                                                        </select>
+                                        memberTasks.map(task => {
+                                            const isOverdue = task.status !== 'completed' && new Date(task.due_date) < new Date(new Date().toDateString());
+
+                                            return (
+                                                <div key={task.id} style={{
+                                                    padding: "16px",
+                                                    background: isOverdue ? "rgba(239, 68, 68, 0.15)" : "rgba(255,255,255,0.03)",
+                                                    border: isOverdue ? "1px solid rgba(239, 68, 68, 0.5)" : "1px solid var(--border-glass)",
+                                                    borderRadius: "12px",
+                                                    transition: "all 0.3s",
+                                                    position: "relative"
+                                                }}>
+                                                    {isOverdue && (
+                                                        <div style={{
+                                                            display: "inline-flex",
+                                                            alignItems: "center",
+                                                            gap: "6px",
+                                                            background: "rgba(239, 68, 68, 0.9)",
+                                                            color: "#fff",
+                                                            fontSize: "0.7rem",
+                                                            fontWeight: "700",
+                                                            padding: "4px 10px",
+                                                            borderRadius: "6px",
+                                                            marginBottom: "10px",
+                                                            letterSpacing: "0.5px",
+                                                            animation: "pulse 2s infinite"
+                                                        }}>
+                                                            ⚠ Görev Tarihi Geçti
+                                                        </div>
                                                     )}
-                                                    {!isAdmin && !isMe && (
-                                                        <span className="badge" style={{ background: statusMap[task.status].bg, color: statusMap[task.status].color, border: `1px solid ${statusMap[task.status].color}` }}>
-                                                            {statusMap[task.status].label}
+                                                    <div className="flex-between mb-2">
+                                                        <h5 style={{ fontSize: "1rem", fontWeight: "500", lineHeight: "1.4", paddingRight: "8px" }}>{task.title}</h5>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                                            {(isAdmin || isMe) && (
+                                                                <select
+                                                                    value={task.status}
+                                                                    onChange={(e) => handleStatusChange(task.id, e.target.value, task.title, task.google_event_id)}
+                                                                    style={{
+                                                                        background: statusMap[task.status].bg,
+                                                                        color: statusMap[task.status].color,
+                                                                        border: `1px solid ${statusMap[task.status].color}`,
+                                                                        borderRadius: "8px",
+                                                                        padding: "4px 8px",
+                                                                        fontSize: "0.75rem",
+                                                                        fontWeight: "600",
+                                                                        outline: "none",
+                                                                        cursor: "pointer"
+                                                                    }}
+                                                                >
+                                                                    <option value="pending">Bekliyor</option>
+                                                                    <option value="in-progress">Devam Ediyor</option>
+                                                                    <option value="completed">Tamamlandı</option>
+                                                                </select>
+                                                            )}
+                                                            {!isAdmin && !isMe && (
+                                                                <span className="badge" style={{ background: statusMap[task.status].bg, color: statusMap[task.status].color, border: `1px solid ${statusMap[task.status].color}` }}>
+                                                                    {statusMap[task.status].label}
+                                                                </span>
+                                                            )}
+                                                            {isAdmin && (
+                                                                <button
+                                                                    onClick={() => handleDeleteTask(task.id, task.google_event_id, task.users?.email)}
+                                                                    className="btn-icon-small"
+                                                                    title="Görevi Sil"
+                                                                    style={{
+                                                                        background: "rgba(239, 68, 68, 0.1)",
+                                                                        borderColor: "transparent",
+                                                                        color: "var(--danger)",
+                                                                        padding: "6px",
+                                                                        width: "auto",
+                                                                        height: "auto",
+                                                                        justifyContent: "center"
+                                                                    }}
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex-center" style={{ justifyContent: "flex-start", gap: "8px" }}>
+                                                        <Clock size={14} color={isOverdue ? "rgba(239, 68, 68, 0.9)" : "var(--text-muted)"} />
+                                                        <span style={{ fontSize: "0.85rem", color: isOverdue ? "rgba(239, 68, 68, 0.9)" : "var(--text-muted)", fontWeight: isOverdue ? "600" : "400" }}>
+                                                            Bitiş: {format(new Date(task.due_date), "d MMM yyyy", { locale: tr })}
                                                         </span>
-                                                    )}
+                                                    </div>
                                                 </div>
-                                                <div className="flex-center" style={{ justifyContent: "flex-start", gap: "8px" }}>
-                                                    <Clock size={14} color="var(--text-muted)" />
-                                                    <span className="text-muted" style={{ fontSize: "0.85rem" }}>
-                                                        Bitiş: {format(new Date(task.due_date), "d MMM yyyy", { locale: tr })}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     )}
                                 </div>
                             </div>
@@ -250,6 +354,7 @@ export default function TeamDetailPage() {
                 teamId={teamId}
                 userId={assignmentModal.userId}
                 userName={assignmentModal.userName}
+                userEmail={assignmentModal.userEmail}
                 onClose={() => setAssignmentModal({ ...assignmentModal, isOpen: false })}
                 onSuccess={() => refetchTasks()}
             />
