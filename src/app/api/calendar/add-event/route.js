@@ -53,12 +53,19 @@ export async function POST(request) {
 
         const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
+        // Verify: whose calendar are we accessing?
+        try {
+            const calendarInfo = await calendar.calendars.get({ calendarId: 'primary' });
+            console.log(`[Calendar API] Token owner calendar: ${calendarInfo.data.summary} (${calendarInfo.data.id})`);
+        } catch (verifyErr) {
+            console.error(`[Calendar API] Could not verify calendar owner:`, verifyErr.message);
+        }
+
         // Format dates for Google Calendar
-        const startDate = new Date(dueDate);
-        startDate.setHours(9, 0, 0); // Default to 09:00 AM on the due date
-        
-        const endDate = new Date(startDate);
-        endDate.setHours(10, 0, 0); // 1 hour duration
+        const startDate = new Date(dueDate + 'T09:00:00+03:00'); // 09:00 Turkey time
+        const endDate = new Date(dueDate + 'T10:00:00+03:00');   // 10:00 Turkey time
+
+        console.log(`[Calendar API] Creating event: "${title}" on ${dueDate}, start: ${startDate.toISOString()}, end: ${endDate.toISOString()}`);
 
         // Create the event
         const event = {
@@ -84,10 +91,10 @@ export async function POST(request) {
         const response = await calendar.events.insert({
             calendarId: 'primary',
             resource: event,
-            sendUpdates: 'none', // E-posta gönderme (Sessizce ekle)
+            sendUpdates: 'none',
         });
 
-        console.log(`[Calendar API] Success! Event ID: ${response.data.id}`);
+        console.log(`[Calendar API] Success! Event ID: ${response.data.id}, htmlLink: ${response.data.htmlLink}`);
         return NextResponse.json({ success: true, eventId: response.data.id });
 
     } catch (error) {
