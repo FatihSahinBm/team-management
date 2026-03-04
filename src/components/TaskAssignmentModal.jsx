@@ -49,10 +49,18 @@ export default function TaskAssignmentModal({ isOpen, onClose, onSuccess, teamId
                     })
                 });
 
-                const data = await response.json();
+                const responseText = await response.text();
+                let data = {};
+                try {
+                    data = responseText ? JSON.parse(responseText) : {};
+                } catch (parseErr) {
+                    console.error("API yanıtı JSON olarak okunamadı:", responseText);
+                    data = { error: "Sunucu geçersiz bir yanıt döndü: " + responseText.substring(0, 200) };
+                }
+
                 if (!response.ok) {
                     console.warn("Takvim API Uyarısı:", data.error);
-                    alert("Google Takvim'e eklenirken bir sorun oluştu:\n" + data.error);
+                    alert("Google Takvim'e eklenirken bir sorun oluştu:\n" + (data.error || `HTTP ${response.status}`));
                 } else if (data.eventId) {
                     // Update task with the Google Event ID
                     await supabase

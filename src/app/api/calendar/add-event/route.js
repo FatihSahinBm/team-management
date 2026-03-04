@@ -2,14 +2,12 @@ import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import fs from 'fs';
 
 export async function POST(request) {
     try {
         const body = await request.json();
         const { title, dueDate, assigneeEmail, providerToken } = body;
-
-        fs.appendFileSync('calendar_debug.log', `[${new Date().toISOString()}] Request target: ${assigneeEmail}, providerToken length: ${providerToken?.length || 0}\n`);
+        console.log(`[Calendar API] Request target: ${assigneeEmail}, providerToken length: ${providerToken?.length || 0}`);
 
         if (!title || !dueDate || !assigneeEmail) {
             return NextResponse.json({ error: "Eksik parametreler" }, { status: 400 });
@@ -36,7 +34,7 @@ export async function POST(request) {
             .single();
 
         if (tokenError || !assigneeTokens || !assigneeTokens.provider_token) {
-            fs.appendFileSync('calendar_debug.log', `[${new Date().toISOString()}] Token Error for ${assigneeEmail}: ${tokenError?.message || 'Token not found'}\n`);
+            console.error(`[Calendar API] Token Error for ${assigneeEmail}:`, tokenError?.message || 'Token not found');
             return NextResponse.json({ 
                 error: `Takvim Hatası: ${assigneeEmail} adlı kullanıcının Google Takvim erişim izni bulunamadı. Kullanıcının sistemden çıkış yapıp tekrar Google ile giriş yapması gerekiyor.` 
             }, { status: 403 });
@@ -89,12 +87,11 @@ export async function POST(request) {
             sendUpdates: 'none', // E-posta gönderme (Sessizce ekle)
         });
 
-        fs.appendFileSync('calendar_debug.log', `[${new Date().toISOString()}] Success! Event ID: ${response.data.id}\n`);
+        console.log(`[Calendar API] Success! Event ID: ${response.data.id}`);
         return NextResponse.json({ success: true, eventId: response.data.id });
 
     } catch (error) {
-        console.error("Calendar API Error:", error);
-        fs.appendFileSync('calendar_debug.log', `[${new Date().toISOString()}] ERROR: ${error.message}\nStack: ${error.stack}\n`);
+        console.error("Calendar API Error:", error, error.stack);
         return NextResponse.json({ error: "Takvim etkinliği oluşturulamadı: " + error.message }, { status: 500 });
     }
 }
