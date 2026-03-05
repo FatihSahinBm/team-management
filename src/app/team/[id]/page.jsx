@@ -289,7 +289,7 @@ export default function TeamDetailPage() {
                                                             {(isAdmin || isMe) && (
                                                                 <select
                                                                     value={task.status}
-                                                                    onChange={(e) => handleStatusChange(task.id, e.target.value, task.title, task.google_event_id)}
+                                                                    onChange={(e) => handleStatusChange(task.id, e.target.value, task.title, task.google_event_id, member.user_email)}
                                                                     style={{
                                                                         background: statusMap[task.status].bg,
                                                                         color: statusMap[task.status].color,
@@ -314,7 +314,7 @@ export default function TeamDetailPage() {
                                                             )}
                                                             {isAdmin && (
                                                                 <button
-                                                                    onClick={() => handleDeleteTask(task.id, task.google_event_id, task.users?.email)}
+                                                                    onClick={() => handleDeleteTask(task.id, task.google_event_id, member.user_email)}
                                                                     className="btn-icon-small"
                                                                     title="Görevi Sil"
                                                                     style={{

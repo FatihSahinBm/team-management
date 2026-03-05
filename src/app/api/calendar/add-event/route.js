@@ -79,6 +79,9 @@ export async function POST(request) {
                 dateTime: endDate.toISOString(),
                 timeZone: 'Europe/Istanbul',
             },
+            attendees: [
+                { email: assigneeEmail }
+            ],
             reminders: {
                 useDefault: false,
                 overrides: [
@@ -91,7 +94,7 @@ export async function POST(request) {
         const response = await calendar.events.insert({
             calendarId: 'primary',
             resource: event,
-            sendUpdates: 'none',
+            sendUpdates: 'all',
         });
 
         console.log(`[Calendar API] Success! Event ID: ${response.data.id}, htmlLink: ${response.data.htmlLink}`);
