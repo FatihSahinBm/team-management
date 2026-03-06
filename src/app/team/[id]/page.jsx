@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTeamStore } from "@/store/useTeamStore";
 import TaskAssignmentModal from "@/components/TaskAssignmentModal";
+import MemberStatsModal from "@/components/MemberStatsModal";
 import { Users, Crown, Calendar, CheckCircle, Clock, Plus, ArrowLeft, Loader2, Key, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -21,6 +22,13 @@ export default function TeamDetailPage() {
         isOpen: false,
         userId: null,
         userName: ""
+    });
+
+    const [statsModal, setStatsModal] = useState({
+        isOpen: false,
+        userName: "",
+        userEmail: "",
+        memberTasks: []
     });
 
     useEffect(() => {
@@ -179,12 +187,21 @@ export default function TeamDetailPage() {
                         return (
                             <div key={member.id} className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px", alignSelf: "start" }}>
                                 <div className="flex-between" style={{ borderBottom: "1px solid var(--border-glass)", paddingBottom: "16px" }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div
+                                        style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', flex: 1 }}
+                                        onClick={() => setStatsModal({
+                                            isOpen: true,
+                                            userName: member.user_email?.split('@')[0] || 'Kullanıcı',
+                                            userEmail: member.user_email,
+                                            memberTasks: memberTasks
+                                        })}
+                                        title="Kullanıcı istatistiklerini gör"
+                                    >
                                         <div className="btn-icon-small" style={{ pointerEvents: 'none', background: isMemberAdmin ? "var(--warning)" : "var(--bg-glass)", borderColor: isMemberAdmin ? "var(--warning)" : "var(--border-glass)", color: isMemberAdmin ? "black" : "white" }}>
                                             {isMemberAdmin ? <Crown size={16} /> : <Users size={16} />}
                                         </div>
                                         <div>
-                                            <h3 style={{ fontSize: "1.1rem" }}>
+                                            <h3 style={{ fontSize: "1.1rem", transition: "color 0.2s" }} className="hover-text-primary">
                                                 {member.user_email ? member.user_email.split('@')[0] : 'Kullanıcı'}
                                                 {isMe && <span className="text-muted" style={{ fontSize: "0.8rem", marginLeft: "8px" }}>(Sen)</span>}
                                             </h3>
@@ -322,6 +339,14 @@ export default function TeamDetailPage() {
                 userEmail={assignmentModal.userEmail}
                 onClose={() => setAssignmentModal({ ...assignmentModal, isOpen: false })}
                 onSuccess={() => refetchTasks()}
+            />
+
+            <MemberStatsModal
+                isOpen={statsModal.isOpen}
+                onClose={() => setStatsModal({ ...statsModal, isOpen: false })}
+                userName={statsModal.userName}
+                userEmail={statsModal.userEmail}
+                memberTasks={statsModal.memberTasks}
             />
         </div >
     );
