@@ -254,7 +254,6 @@ export default function TeamDetailPage() {
                                                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                                             {(isAdmin || isMe) && (
                                                                 <select
-                                                                    value={task.status}
                                                                     onChange={(e) => handleStatusChange(task.id, e.target.value)}
                                                                     style={{
                                                                         background: statusMap[task.status].bg,
@@ -324,6 +323,6 @@ export default function TeamDetailPage() {
                 onClose={() => setAssignmentModal({ ...assignmentModal, isOpen: false })}
                 onSuccess={() => refetchTasks()}
             />
-        </div>
+        </div >
     );
 }

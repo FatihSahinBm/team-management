@@ -32,20 +32,8 @@ export default function TaskAssignmentModal({ isOpen, onClose, onSuccess, teamId
 
             if (insertError) throw insertError;
 
-            // 2. Trigger Push Notification to assignee
-            try {
-                await fetch('/api/notifications/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        assigneeId: userId,
-                        title: "Yeni Görev Atandı!",
-                        message: `${userName}, size yeni bir görev atandı: ${title}`
-                    })
-                });
-            } catch (notifyError) {
-                console.error("Bildirim gönderilemedi:", notifyError);
-            }
+            // No calendar sync in this version.
+
 
             onSuccess();
             onClose();
