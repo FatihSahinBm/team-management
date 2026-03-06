@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useTeamStore } from "@/store/useTeamStore";
 import TaskAssignmentModal from "@/components/TaskAssignmentModal";
 import MemberStatsModal from "@/components/MemberStatsModal";
-import { Users, Crown, Calendar, CheckCircle, Clock, Plus, ArrowLeft, Loader2, Key, Trash2 } from "lucide-react";
+import { Users, Crown, Calendar, CheckCircle, Clock, Plus, ArrowLeft, Loader2, Key, Trash2, UserMinus } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -53,7 +53,7 @@ export default function TeamDetailPage() {
     });
 
     // Fetch Team Members
-    const { data: members, isLoading: membersLoading } = useQuery({
+    const { data: members, isLoading: membersLoading, refetch: refetchMembers } = useQuery({
         queryKey: ['team_members', teamId],
         queryFn: async () => {
             const { data, error } = await supabase
@@ -145,6 +145,27 @@ export default function TeamDetailPage() {
         }
     };
 
+    const handleRemoveMember = async (memberId, memberEmail) => {
+        if (!window.confirm(`${memberEmail} kullanıcısını ekipten çıkarmak istediğinize emin misiniz?`)) {
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('team_members')
+                .delete()
+                .match({ team_id: teamId, user_id: memberId });
+
+            if (error) throw error;
+
+            refetchMembers();
+            // İsteğe bağlı: Üyenin task'larını silmek ya da pending'e çevirmek.
+            // Orijinal istekte sadece çıkarma istendiği için sadece ekipten çıkarıyoruz.
+        } catch (err) {
+            alert("Üye çıkarılırken bir hata oluştu: " + err.message);
+        }
+    };
+
     const statusMap = {
         'pending': { label: 'Bekliyor', color: 'var(--warning)', bg: 'rgba(245, 158, 11, 0.2)' },
         'in-progress': { label: 'Devam Ediyor', color: 'var(--primary)', bg: 'rgba(99, 102, 241, 0.2)' },
@@ -209,7 +230,32 @@ export default function TeamDetailPage() {
                                         </div>
                                     </div>
 
-                                    {isAdmin && (
+                                    {isAdmin && !isMemberAdmin && (
+                                        <div style={{ display: "flex", gap: "8px" }}>
+                                            <button
+                                                className="btn-icon-small"
+                                                title="Görev Ata"
+                                                style={{ background: "var(--primary)", borderColor: "var(--primary)", color: "white" }}
+                                                onClick={() => setAssignmentModal({
+                                                    isOpen: true,
+                                                    userId: member.user_id,
+                                                    userName: member.user_email?.split('@')[0] || 'Kullanıcı',
+                                                    userEmail: member.user_email
+                                                })}
+                                            >
+                                                <Plus size={20} />
+                                            </button>
+                                            <button
+                                                className="btn-icon-small"
+                                                title="Üyeyi Çıkar"
+                                                style={{ background: "rgba(239, 68, 68, 0.1)", borderColor: "transparent", color: "var(--danger)" }}
+                                                onClick={() => handleRemoveMember(member.user_id, member.user_email)}
+                                            >
+                                                <UserMinus size={20} />
+                                            </button>
+                                        </div>
+                                    )}
+                                    {isAdmin && isMemberAdmin && (
                                         <button
                                             className="btn-icon-small"
                                             title="Görev Ata"
