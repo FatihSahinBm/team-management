@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useTeamStore } from "@/store/useTeamStore";
 import TaskAssignmentModal from "@/components/TaskAssignmentModal";
 import MemberStatsModal from "@/components/MemberStatsModal";
-import { Users, Crown, Calendar, CheckCircle, Clock, Plus, ArrowLeft, Loader2, Key, Trash2, UserMinus } from "lucide-react";
+import { Users, Crown, Calendar, CheckCircle, Clock, Plus, ArrowLeft, Loader2, Key, Trash2, UserMinus, Settings, Edit2, X } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -31,6 +31,9 @@ export default function TeamDetailPage() {
         memberTasks: []
     });
 
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [newName, setNewName] = useState("");
+
     useEffect(() => {
         if (!user) {
             router.push("/");
@@ -38,7 +41,7 @@ export default function TeamDetailPage() {
     }, [user, router]);
 
     // Fetch Team Info
-    const { data: team, isLoading: teamLoading, error: teamError } = useQuery({
+    const { data: team, isLoading: teamLoading, error: teamError, refetch: refetchTeam } = useQuery({
         queryKey: ['team', teamId],
         queryFn: async () => {
             const { data, error } = await supabase
@@ -166,6 +169,27 @@ export default function TeamDetailPage() {
         }
     };
 
+    const handleRenameTeam = async () => {
+        if (!newName.trim() || newName.trim() === team.name) {
+            setIsEditingName(false);
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('teams')
+                .update({ name: newName.trim() })
+                .eq('id', teamId);
+
+            if (error) throw error;
+
+            refetchTeam();
+            setIsEditingName(false);
+        } catch (err) {
+            alert("Ekip adı güncellenirken bir hata oluştu: " + err.message);
+        }
+    };
+
     const statusMap = {
         'pending': { label: 'Bekliyor', color: 'var(--warning)', bg: 'rgba(245, 158, 11, 0.2)' },
         'in-progress': { label: 'Devam Ediyor', color: 'var(--primary)', bg: 'rgba(99, 102, 241, 0.2)' },
@@ -178,9 +202,32 @@ export default function TeamDetailPage() {
                 <ArrowLeft size={18} /> <span style={{ fontSize: "0.9rem" }}>Dashboard'a Dön</span>
             </Link>
 
-            <header className="glass-panel flex-between mb-8" style={{ padding: "32px" }}>
+            <header className="glass-panel flex-between mb-8" style={{ padding: "32px", alignItems: "flex-start" }}>
                 <div>
-                    <h1 className="text-gradient" style={{ fontSize: "2.5rem", marginBottom: "8px" }}>{team.name}</h1>
+                    {isEditingName ? (
+                        <div className="flex-center" style={{ gap: "12px", marginBottom: "8px" }}>
+                            <input
+                                type="text"
+                                className="input-field"
+                                value={newName}
+                                onChange={(e) => setNewName(e.target.value)}
+                                style={{ fontSize: "1.5rem", padding: "8px 16px", height: "auto" }}
+                                autoFocus
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleRenameTeam();
+                                    if (e.key === 'Escape') setIsEditingName(false);
+                                }}
+                            />
+                            <button className="btn-primary flex-center gap-2" style={{ padding: "8px 16px", borderRadius: "12px" }} onClick={handleRenameTeam}>
+                                Kaydet
+                            </button>
+                            <button className="btn-icon-small" onClick={() => setIsEditingName(false)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                    ) : (
+                        <h1 className="text-gradient" style={{ fontSize: "2.5rem", marginBottom: "8px" }}>{team.name}</h1>
+                    )}
                     <div className="flex-center" style={{ justifyContent: "flex-start", gap: "16px" }}>
                         <span className="badge badge-primary flex-center gap-2" style={{ background: "rgba(255,255,255,0.05)" }}>
                             <Key size={14} /> Davet Kodu: <strong style={{ letterSpacing: "2px" }}>{team.code}</strong>
@@ -195,6 +242,20 @@ export default function TeamDetailPage() {
                         )}
                     </div>
                 </div>
+
+                {isAdmin && !isEditingName && (
+                    <button
+                        className="btn-icon-small"
+                        title="Ekip Ayarları (Adını Değiştir)"
+                        onClick={() => {
+                            setNewName(team.name);
+                            setIsEditingName(true);
+                        }}
+                        style={{ background: "rgba(255,255,255,0.05)", borderColor: "var(--border-glass)" }}
+                    >
+                        <Settings size={20} className="text-muted" />
+                    </button>
+                )}
             </header>
 
             <div className="mb-6">
