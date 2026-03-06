@@ -118,7 +118,12 @@ export default function Dashboard() {
                 ) : (
                     <div className="grid-2">
                         {teams.map(team => (
-                            <div key={team.id} className="glass-panel task-card" style={{ padding: "24px", flexDirection: "column", alignItems: "flex-start", gap: "16px", position: "relative" }}>
+                            <div
+                                key={team.id}
+                                className="glass-panel task-card"
+                                onClick={() => router.push(`/team/${team.id}`)}
+                                style={{ padding: "24px", flexDirection: "column", alignItems: "flex-start", gap: "16px", position: "relative", cursor: "pointer" }}
+                            >
                                 <div className="flex-between" style={{ width: "100%" }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <div className="btn-icon-small" style={{ pointerEvents: 'none' }}>
@@ -169,10 +174,10 @@ export default function Dashboard() {
                                     <strong style={{ letterSpacing: "1px", color: "var(--text-main)" }}>{team.code}</strong>
                                 </div>
 
-                                <Link href={`/team/${team.id}`} className="flex-between mt-auto pt-2" style={{ width: "100%", borderTop: "1px solid var(--border-glass)", textDecoration: "none" }}>
+                                <div className="flex-between mt-auto pt-2" style={{ width: "100%", borderTop: "1px solid var(--border-glass)" }}>
                                     <span className="text-muted" style={{ fontSize: "0.875rem" }}>Panoya Git</span>
                                     <ArrowRight size={18} color="var(--primary)" />
-                                </Link>
+                                </div>
                             </div>
                         ))}
                     </div>
