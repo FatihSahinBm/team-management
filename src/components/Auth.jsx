@@ -122,11 +122,6 @@ export default function Auth() {
                                 const { error } = await supabase.auth.signInWithOAuth({
                                     provider: 'google',
                                     options: {
-                                        scopes: 'https://www.googleapis.com/auth/calendar.events',
-                                        queryParams: {
-                                            access_type: 'offline',
-                                            prompt: 'consent',
-                                        },
                                         // Use redirectTo to explicitly set the callback URL if needed.
                                         // Note: If accessing from a local IP (e.g. 192.168.x.x) instead of localhost,
                                         // that IP MUST be added to Supabase Dashboard -> Authentication -> URL Configuration -> Redirect URLs

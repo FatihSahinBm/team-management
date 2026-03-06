@@ -103,7 +103,7 @@ export default function TeamDetailPage() {
         return acc;
     }, {}) || {};
 
-    const handleStatusChange = async (taskId, newStatus, currentTitle, googleEventId, assigneeEmail) => {
+    const handleStatusChange = async (taskId, newStatus) => {
         try {
             const { error } = await supabase
                 .from('tasks')
@@ -111,52 +111,18 @@ export default function TeamDetailPage() {
                 .eq('id', taskId);
 
             if (error) throw error;
-
-            // Sync with Google Calendar if event exists
-            if (googleEventId && assigneeEmail) {
-                await fetch('/api/calendar/update-event', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        eventId: googleEventId,
-                        assigneeEmail: assigneeEmail,
-                        title: currentTitle,
-                        status: newStatus
-                    })
-                }).catch(console.error); // Add non-blocking catch so UI updates even if sync fails
-            }
-
             refetchTasks();
         } catch (err) {
             alert("Görev güncellenirken bir hata oluştu: " + err.message);
         }
     };
 
-    const handleDeleteTask = async (taskId, googleEventId, assigneeEmail) => {
-        if (!window.confirm("Bu görevi silmek istediğinize emin misiniz? (Eğer takvime eklendiyse, oradan da silinecektir.)")) {
+    const handleDeleteTask = async (taskId) => {
+        if (!window.confirm("Bu görevi silmek istediğinize emin misiniz?")) {
             return;
         }
 
         try {
-            // 2. Try to delete from Google Calendar first
-            if (googleEventId && assigneeEmail) {
-                const response = await fetch('/api/calendar/delete-event', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        eventId: googleEventId,
-                        assigneeEmail: assigneeEmail
-                    })
-                });
-
-                const data = await response.json();
-                if (!response.ok) {
-                    alert("Google Takvim'den silinirken bir sorun oluştu:\n" + data.error);
-                    // Optional: early return to prevent DB deletion if calendar fails?
-                    // return; 
-                }
-            }
-
             // 1. Delete from Supabase
             const { error } = await supabase
                 .from('tasks')
@@ -289,7 +255,7 @@ export default function TeamDetailPage() {
                                                             {(isAdmin || isMe) && (
                                                                 <select
                                                                     value={task.status}
-                                                                    onChange={(e) => handleStatusChange(task.id, e.target.value, task.title, task.google_event_id, member.user_email)}
+                                                                    onChange={(e) => handleStatusChange(task.id, e.target.value)}
                                                                     style={{
                                                                         background: statusMap[task.status].bg,
                                                                         color: statusMap[task.status].color,
@@ -314,7 +280,7 @@ export default function TeamDetailPage() {
                                                             )}
                                                             {isAdmin && (
                                                                 <button
-                                                                    onClick={() => handleDeleteTask(task.id, task.google_event_id, member.user_email)}
+                                                                    onClick={() => handleDeleteTask(task.id)}
                                                                     className="btn-icon-small"
                                                                     title="Görevi Sil"
                                                                     style={{

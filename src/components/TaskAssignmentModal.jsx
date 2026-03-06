@@ -32,46 +32,19 @@ export default function TaskAssignmentModal({ isOpen, onClose, onSuccess, teamId
 
             if (insertError) throw insertError;
 
-            // 2. Try to add to Google Calendar
+            // 2. Trigger Push Notification to assignee
             try {
-                // Get the current session to extract the provider token
-                const { data: { session } } = await supabase.auth.getSession();
-                const providerToken = session?.provider_token;
-
-                const response = await fetch('/api/calendar/add-event', {
+                await fetch('/api/notifications/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        title,
-                        dueDate,
-                        assigneeEmail: userEmail, // We need to add userEmail as a prop
-                        providerToken // Pass the provider token to the server
+                        assigneeId: userId,
+                        title: "Yeni Görev Atandı!",
+                        message: `${userName}, size yeni bir görev atandı: ${title}`
                     })
                 });
-
-                const responseText = await response.text();
-                let data = {};
-                try {
-                    data = responseText ? JSON.parse(responseText) : {};
-                } catch (parseErr) {
-                    console.error("API yanıtı JSON olarak okunamadı:", responseText);
-                    data = { error: "Sunucu geçersiz bir yanıt döndü: " + responseText.substring(0, 200) };
-                }
-
-                if (!response.ok) {
-                    console.warn("Takvim API Uyarısı:", data.error);
-                    alert("Google Takvim'e eklenirken bir sorun oluştu:\n" + (data.error || `HTTP ${response.status}`));
-                } else if (data.eventId) {
-                    // Update task with the Google Event ID
-                    await supabase
-                        .from('tasks')
-                        .update({ google_event_id: data.eventId })
-                        .eq('id', insertedTask.id);
-                }
-            } catch (calendarError) {
-                console.error("Takvim entegrasyon hatası:", calendarError);
-                alert("Takvim entegrasyon hatası: " + calendarError.message);
-                // Do not throw, we still successfully created the task
+            } catch (notifyError) {
+                console.error("Bildirim gönderilemedi:", notifyError);
             }
 
             onSuccess();

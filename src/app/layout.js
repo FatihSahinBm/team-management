@@ -17,12 +17,14 @@ export const metadata = {
 };
 
 import QueryProvider from "@/providers/QueryProvider";
+import NotificationManager from "@/components/NotificationManager";
 
 export default function RootLayout({ children }) {
   return (
     <html lang="tr">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <QueryProvider>
+          <NotificationManager />
           {children}
         </QueryProvider>
       </body>
